@@ -21,6 +21,18 @@ namespace ToDo_List
         public string? Version;
         public string? Date;
 
+        public enum Label
+        {
+            Target,
+            Topic,
+            Status,
+            Priority,
+            Title,
+            Description,
+            Version,
+            Date
+        }
+
         public enum PriorityLevel
         {
             Critical,
