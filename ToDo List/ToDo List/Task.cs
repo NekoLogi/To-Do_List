@@ -12,6 +12,7 @@ namespace ToDo_List
 {
     internal class Task
     {
+        public int Id;
         public string? Target;
         public string? Topic;
         public int Status;
@@ -54,35 +55,51 @@ namespace ToDo_List
             Task _task = new Task();
             if (!Preset.UseGUI)
             {
+                // ID
+                int _largestId = 0;
+                foreach (var _item in Directory.GetFiles(path))
+                {
+                    int _currentId = int.Parse(_item.Replace($"{path}//", "").Replace(".json", ""));
+                    if (_largestId < _currentId)
+                        _largestId = _currentId;
+                }
+                _task.Id = _largestId++;
+
+                // Target
                 Console.Write("Application: ");
                 _task.Target = Console.ReadLine();
                 Console.Clear();
 
+                // Topic
                 Console.Write("Task Group: ");
                 _task.Topic = Console.ReadLine();
                 Console.Clear();
 
-                string[] _options = (string[])Enum.GetValues(typeof(PriorityLevel));
+                // Priority
+                string[] _options = Enum.GetNames(typeof(PriorityLevel));
                 int _index = Display.Selector("Priority:", _options, _options.Count(), Display.Direction.Vertical, false);
                 _task.Priority = _index;
                 Console.Clear();
 
+                // Title
                 Console.Write("Title: ");
                 _task.Title = Console.ReadLine();
                 Console.Clear();
 
+                // Description
                 Console.Write("Description: ");
                 _task.Description = Console.ReadLine();
                 Console.Clear();
 
+                // Version
                 Console.Write("Version: ");
                 _task.Version = Console.ReadLine();
                 Console.Clear();
 
                 _task.Status = (int)TaskStatus.Queued;
-                _task.Date = DateTime.Now.Date.ToString();
+                _task.Date = DateTime.Now.Date.ToString("dd/MM/yyyy");
             }
-            string _path = $"{path}/{_task.Target} {_task.Topic} {_task.Title}.json";
+            string _path = $"{path}/{_task.Id}.json";
             string _json = JsonConvert.SerializeObject(_task, Formatting.Indented);
             File.WriteAllText(_path, _json);
 
@@ -107,10 +124,20 @@ namespace ToDo_List
             List<Task> _tasks = new List<Task>();
             foreach (string _file in _files)
             {
-                Task _task = JsonConvert.DeserializeObject<Task>(_file)!;
+                string _json = File.ReadAllText(_file);
+                Task _task = JsonConvert.DeserializeObject<Task>(_json)!;
                 _tasks.Add(_task);
             }
             return _tasks.ToArray();
+        }
+
+        public static bool SaveTask(string path, Task task)
+        {
+            string _path = $"{path}/{task.Id}.json";
+            string _json = JsonConvert.SerializeObject(task, Formatting.Indented);
+            File.WriteAllText(_path, _json);
+
+            return true;
         }
     }
 }

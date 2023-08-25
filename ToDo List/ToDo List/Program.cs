@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Xml.Linq;
 
 namespace ToDo_List
 {
@@ -51,7 +52,7 @@ namespace ToDo_List
             return _name;
         }
 
-        private static void Editor(Task task)
+        private static Task Editor(Task task)
         {
             string[] _taskOptions = List.GenerateTask(task);
             int _index = Display.Selector("Editor:", _taskOptions, 6, Display.Direction.Horizontal, false);
@@ -60,26 +61,26 @@ namespace ToDo_List
             switch (_index)
             {
                 case (int)Task.Label.Target:
-                    _index = Display.Selector("Editor:", _options, _options.Count(), Display.Direction.Horizontal, false);
+                    _index = Display.Selector("Editor:", _options, _options.Length, Display.Direction.Horizontal, false);
                     if (_index == 0)
                     {
                         task.Target = Rename(task.Target!);
                     }
                     break;
                 case (int)Task.Label.Topic:
-                    _index = Display.Selector("Editor:", _options, _options.Count(), Display.Direction.Horizontal, false);
+                    _index = Display.Selector("Editor:", _options, _options.Length, Display.Direction.Horizontal, false);
                     if (_index == 0)
                     {
                         task.Topic = Rename(task.Topic!);
                     }
                     break;
                 case (int)Task.Label.Status:
-                    _index = Display.Selector("Editor:", _options, _options.Count(), Display.Direction.Horizontal, false);
+                    _index = Display.Selector("Editor:", _options, _options.Length, Display.Direction.Horizontal, false);
                     if (_index == 0)
                     {
-                        task.Status = Display.Selector($"Current: {((string[])Enum.GetValues(typeof(Task.TaskStatus)))[task.Status]}",
-                            (string[])Enum.GetValues(typeof(Task.TaskStatus)),
-                            ((string[])Enum.GetValues(typeof(Task.TaskStatus))).Count(),
+                        task.Status = Display.Selector($"Current: {Enum.GetNames(typeof(Task.TaskStatus))[task.Status]}",
+                            Enum.GetNames(typeof(Task.TaskStatus)),
+                            Enum.GetNames(typeof(Task.TaskStatus)).Length,
                             Display.Direction.Vertical,
                             false);
                     }
@@ -88,35 +89,36 @@ namespace ToDo_List
                     _index = Display.Selector("Editor:", _options, _options.Count(), Display.Direction.Horizontal, false);
                     if (_index == 0)
                     {
-                        task.Priority = Display.Selector($"Current: {((string[])Enum.GetValues(typeof(Task.PriorityLevel)))[task.Priority]}",
-                            (string[])Enum.GetValues(typeof(Task.PriorityLevel)),
-                            ((string[])Enum.GetValues(typeof(Task.PriorityLevel))).Count(),
+                        task.Priority = Display.Selector($"Current: {Enum.GetNames(typeof(Task.PriorityLevel))[task.Priority]}",
+                            Enum.GetNames(typeof(Task.PriorityLevel)),
+                            Enum.GetNames(typeof(Task.PriorityLevel)).Length,
                             Display.Direction.Vertical,
                             false);
                     }
                     break;
                 case (int)Task.Label.Title:
-                    _index = Display.Selector("Editor:", _options, _options.Count(), Display.Direction.Horizontal, false);
+                    _index = Display.Selector("Editor:", _options, _options.Length, Display.Direction.Horizontal, false);
                     if (_index == 0)
                     {
                         task.Title = Rename(task.Title!);
                     }
                     break;
                 case (int)Task.Label.Description:
-                    _index = Display.Selector("Editor:", _options, _options.Count(), Display.Direction.Horizontal, false);
+                    _index = Display.Selector("Editor:", _options, _options.Length, Display.Direction.Horizontal, false);
                     if (_index == 0)
                     {
                         task.Description = Rename(task.Description!);
                     }
                     break;
                 case (int)Task.Label.Version:
-                    _index = Display.Selector("Editor:", _options, _options.Count(), Display.Direction.Horizontal, false);
+                    _index = Display.Selector("Editor:", _options, _options.Length, Display.Direction.Horizontal, false);
                     if (_index == 0)
                     {
                         task.Version = Rename(task.Version!);
                     }
                     break;
             }
+            return task;
         }
 
         private static void Start(int[]? sortFlags)
@@ -127,7 +129,7 @@ namespace ToDo_List
                 Task[] _sortedTaskList = null!;
                 if (sortFlags == null || sortFlags?.Length == 0)
                 {
-                    //_sortedTaskList = List.Sort();
+                    _sortedTaskList = _tasks;
                 }
                 else
                 {
@@ -138,19 +140,19 @@ namespace ToDo_List
                 Task _task = _sortedTaskList![_taskIndex];
 
                 string[] _options = { "Back", "Edit", "Delete" };
-                int _index = Display.Selector("Editor:", _options, _options.Count(), Display.Direction.Horizontal, false);
-                if (_index == 1)
+                int _index = Display.Selector("Editor:", _options, _options.Count(), Display.Direction.Vertical, false);
+                if (_index == 2)
                 {
                     _options = new string[] { "Yes", "No" };
                     _index = Display.Selector("Are you sure:", _options, _options.Count(), Display.Direction.Horizontal, false);
-                    if (_index == 2)
+                    if (_index == 0)
                     {
                         Task.Delete(Preset.Path, _task);
                     }
                 }
                 else if (_index == 1)
                 {
-                    Editor(_task);
+                    Task.SaveTask(Preset.Path, Editor(_task));
                 }
             }
         }

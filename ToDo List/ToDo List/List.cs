@@ -31,7 +31,7 @@ namespace ToDo_List
             string _task = "";
             for (int i = 0; i < tasks.Count(); i++)
             {
-                _task = $"{tasks[i].Target} {tasks[i].Topic} {tasks[i].Status} {tasks[i].Priority} {tasks[i].Title} {tasks[i].Description} {tasks[i].Version} {tasks[i].Date}";
+                _task = $"{tasks[i].Target} | {tasks[i].Topic} | {Enum.GetNames(typeof(Task.TaskStatus))[tasks[i].Status]} | {Enum.GetNames(typeof(Task.PriorityLevel))[tasks[i].Priority]} | {tasks[i].Title} | {tasks[i].Description} | {tasks[i].Version} | {tasks[i].Date}";
                 _tasks.Add(_task);
             }
             return _tasks.ToArray();
@@ -43,8 +43,8 @@ namespace ToDo_List
             {
                 $"{task.Target}",
                 $"{task.Topic}",
-                $"{task.Status}",
-                $"{task.Priority}",
+                $"{Enum.GetNames(typeof(Task.TaskStatus))[task.Status]}",
+                $"{Enum.GetNames(typeof(Task.PriorityLevel))[task.Priority]}",
                 $"{task.Title}",
                 $"{task.Description}",
                 $"{task.Version}",
