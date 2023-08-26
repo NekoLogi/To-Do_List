@@ -67,12 +67,12 @@ namespace ToDo_List
 
                 // Target
                 Console.Write("Application: ");
-                _task.Target = Console.ReadLine();
+                _task.Target = ReplaceEmpty(Console.ReadLine()!);
                 Console.Clear();
 
                 // Topic
                 Console.Write("Task Group: ");
-                _task.Topic = Console.ReadLine();
+                _task.Topic = ReplaceEmpty(Console.ReadLine()!);
                 Console.Clear();
 
                 // Priority
@@ -83,17 +83,17 @@ namespace ToDo_List
 
                 // Title
                 Console.Write("Title: ");
-                _task.Title = Console.ReadLine();
+                _task.Title = ReplaceEmpty(Console.ReadLine()!);
                 Console.Clear();
 
                 // Description
                 Console.Write("Description: ");
-                _task.Description = Console.ReadLine();
+                _task.Description = ReplaceEmpty(Console.ReadLine()!);
                 Console.Clear();
 
                 // Version
                 Console.Write("Version: ");
-                _task.Version = Console.ReadLine();
+                _task.Version = ReplaceEmpty(Console.ReadLine()!);
                 Console.Clear();
 
                 _task.Status = (int)TaskStatus.Queued;
@@ -138,6 +138,15 @@ namespace ToDo_List
             File.WriteAllText(_path, _json);
 
             return true;
+        }
+
+        private static string ReplaceEmpty(string data)
+        {
+            if (string.IsNullOrEmpty(data))
+            {
+                return " ";
+            }
+            return data;
         }
     }
 }

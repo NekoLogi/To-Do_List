@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualBasic.FileIO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -23,42 +24,74 @@ namespace ToDo_List
             {
                 Console.Clear();
                 Console.WriteLine(title);
-                Console.WriteLine();
 
-                int[] _rows = GetLongestStrings(options, menuMode);
-                string[] _topStrings = new string[] {
-                    "ID",
-                    "Application",
-                    "Group",
-                    "Status",
-                    "Priority",
-                    "Title",
-                    "Description",
-                    "Version",
-                    "Date"
-                };
-                int _rowIndex = 0;
-                if (_rows[_rowIndex] > _topStrings[_rowIndex].Length)
-                    _topStrings[_rowIndex] = AddWhitespaces(_topStrings[_rowIndex], _rows[_rowIndex]);
+                List<string> _options = new List<string>();
+
+                if (menuMode)
+                {
+                    int[] _rows = GetLongestStrings(options, menuMode);
+                    string[] _topStrings = new string[] {
+                        "ID",
+                        "Application",
+                        "Group",
+                        "Status",
+                        "Priority",
+                        "Title",
+                        "Description",
+                        "Version",
+                        "Date"
+                    };
+                    List<string> _optionColumn = new List<string>();
+                    for (int i = 0; i < _topStrings.Length; i++)
+                    {
+                        if (_rows[i] > _topStrings[i].Length)
+                        {
+                            _topStrings[i] = AddSpaceToString(_topStrings[i], _rows[i]);
+                        }
+                    }
+                    foreach (var _text in _topStrings)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.BackgroundColor = ConsoleColor.Cyan;
+                        Console.Write(_text + " |");
+                        Console.ResetColor();
+                    }
+
+                    for (int j = 0; j < options.Length; j++)
+                    {
+                        string[] _args = options[j].Split("~~");
+                        for (int i = 0; i < _topStrings.Length; i++)
+                        {
+                            if (_rows[i] > _topStrings[i].Length)
+                            {
+                                _optionColumn.Add(_args[i]);
+                            }
+                            else
+                                _optionColumn.Add($"{AddSpaceToString(_args[i], _topStrings[i].Length)} |");
+                        }
+                        string _newOption = "";
+                        foreach (var _option in _optionColumn)
+                        {
+                            _newOption += _option;
+                        }
+                        _options.Add(_newOption);
+                        _optionColumn.Clear();
+                    }
+                }
                 else
-                {
-                    _rows[_rowIndex] = _topStrings[_rowIndex].Length;
-                }
-                foreach (var _text in _topStrings)
-                {
-                    Console.Write(_text + " |");
-                }
+                    _options = options.ToList();
+
                 Console.WriteLine();
                 if (direction == Direction.Vertical)
                 {
-                    ListVertical(options, _index, maxIndex);
+                    ListVertical(_options.ToArray(), _index, maxIndex);
                 }
                 else
                 {
-                    ListHorizontal(options, _index, maxIndex);
+                    ListHorizontal(_options.ToArray(), _index, maxIndex);
                     Console.WriteLine();
                 }
-
+                Console.WriteLine();
                 if (direction == Direction.Vertical)
                 {
                     Console.WriteLine("Use arrow keys UP or DOWN to choose and press 'ENTER' to select.");
@@ -164,7 +197,7 @@ namespace ToDo_List
             }
         }
 
-        private static int[] GetLengthOfStrings(string[] strings)
+        private static int[] StringsToInts(string[] strings)
         {
             List<int> _stringLength = new List<int>();
 
@@ -180,17 +213,14 @@ namespace ToDo_List
             List<int[]> _optionLength = new List<int[]>();
             foreach (var _option in options)
             {
-                if (menuMode)
-                    _optionLength.Add(GetLengthOfStrings(_option.Split(" | ")));
-                else
-                    _optionLength.Add(GetLengthOfStrings(_option.Split(" ")));
+                _optionLength.Add(StringsToInts(_option.Split("~~")));
             }
 
             List <int> _longestRowInts = new List<int>();
             for (int i = 0; i < _optionLength[0].Length; i++)
             {
                 int[] _rows = GetRows(_optionLength.ToArray(), i);
-                _longestRowInts.Add(GetLongestString(_rows));
+                _longestRowInts.Add(GetLargestInt(_rows));
             }
             return _longestRowInts.ToArray();
         }
@@ -205,7 +235,7 @@ namespace ToDo_List
             return _rowIndex.ToArray();
         }
 
-        private static int GetLongestString(int[] lengths)
+        private static int GetLargestInt(int[] lengths)
         {
             int _longestlength = 0;
             foreach (var _length in lengths)
@@ -216,7 +246,7 @@ namespace ToDo_List
             return _longestlength;
         }
 
-        private static string AddWhitespaces(string text, int length)
+        private static string AddSpaceToString(string text, int length)
         {
             int _textLength = text.Length;
             for (int i = 0; i < length + 1; i++)

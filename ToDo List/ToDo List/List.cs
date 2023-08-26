@@ -31,7 +31,7 @@ namespace ToDo_List
             string _task = "";
             for (int i = 0; i < tasks.Count(); i++)
             {
-                _task = $"{tasks[i].Target} | {tasks[i].Topic} | {Enum.GetNames(typeof(Task.TaskStatus))[tasks[i].Status]} | {Enum.GetNames(typeof(Task.PriorityLevel))[tasks[i].Priority]} | {tasks[i].Title} | {tasks[i].Description} | {tasks[i].Version} | {tasks[i].Date}";
+                _task = $"{tasks[i].Id}~~{tasks[i].Target}~~{tasks[i].Topic}~~{Enum.GetNames(typeof(Task.TaskStatus))[tasks[i].Status]}~~{Enum.GetNames(typeof(Task.PriorityLevel))[tasks[i].Priority]}~~{tasks[i].Title}~~{tasks[i].Description}~~{tasks[i].Version}~~{tasks[i].Date}";
                 _tasks.Add(_task);
             }
             return _tasks.ToArray();
