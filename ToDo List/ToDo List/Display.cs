@@ -20,6 +20,7 @@ namespace ToDo_List
         {
             int _index = 0;
             ConsoleKey _key = ConsoleKey.Add;
+            string _search = null;
             while (_key != ConsoleKey.Enter)
             {
                 Console.Clear();
@@ -96,19 +97,19 @@ namespace ToDo_List
                 {
                     Console.WriteLine("Use arrow keys UP or DOWN to choose and press 'ENTER' to select.");
                 }
-                else if (menuMode)
-                {
-                    Console.WriteLine("Use arrow keys UP or DOWN to choose and press 'ENTER' to select.");
-                    Console.WriteLine("Press 'C' to create a new task.");
-                }
                 else
                 {
                     Console.WriteLine("Use arrow keys LEFT or RIGHT to choose and press 'ENTER' to select.");
+                }
+                if (menuMode)
+                {
+                    Console.WriteLine("Press 'End' to create a new task.");
                 }
                 Console.ResetColor();
 
                 _key = Console.ReadKey().Key;
                 _index = Controls(_key, _index, maxIndex, direction, menuMode);
+                _ = Search(_search, (char)_key);
             }
             Console.Clear();
             return _index;
@@ -116,7 +117,7 @@ namespace ToDo_List
 
         private static int Controls(ConsoleKey key, int index, int maxIndex, Direction direction, bool menuMode)
         {
-            if (menuMode && key == ConsoleKey.C)
+            if (menuMode && key == ConsoleKey.End)
             {
                 return -1;
             }
@@ -257,6 +258,11 @@ namespace ToDo_List
                 }
             }
             return text;
+        }
+
+        private static int? Search(string text, char key)
+        {
+            return null;
         }
     }
 }
