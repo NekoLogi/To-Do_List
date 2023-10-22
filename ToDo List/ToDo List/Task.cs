@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 
 namespace ToDo_List
@@ -59,11 +52,11 @@ namespace ToDo_List
                 int _largestId = 0;
                 foreach (var _item in Directory.GetFiles(path))
                 {
-                    int _currentId = int.Parse(_item.Replace($"{path}//", "").Replace(".json", ""));
+                    int _currentId = int.Parse(Path.GetFileNameWithoutExtension(_item));
                     if (_largestId < _currentId)
                         _largestId = _currentId;
                 }
-                _task.Id = _largestId++;
+                _task.Id = _largestId + 1;
 
                 // Target
                 Console.Write("Application: ");

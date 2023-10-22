@@ -1,12 +1,4 @@
-﻿using Microsoft.VisualBasic.FileIO;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ToDo_List
+﻿namespace ToDo_List
 {
     internal class Display
     {
@@ -20,8 +12,28 @@ namespace ToDo_List
         {
             int _index = 0;
             ConsoleKey _key = ConsoleKey.Add;
-            string _search = null;
-            while (_key != ConsoleKey.Enter)
+            int[] _rows = GetLongestStrings(options, menuMode, direction);
+            string[] _topStrings = new string[] {
+                "ID",
+                "Application",
+                "Group",
+                "Status",
+                "Priority",
+                "Title",
+                "Description",
+                "Version",
+                "Date"
+            };
+
+
+            if (direction == Direction.Horizontal)
+            {
+                List<string> strings = _topStrings.ToList();
+                strings.RemoveAt(0);
+                _topStrings = strings.ToArray();
+            }
+
+            while (_key != ConsoleKey.Enter && _index > -1)
             {
                 Console.Clear();
                 Console.WriteLine(title);
@@ -30,54 +42,8 @@ namespace ToDo_List
 
                 if (menuMode)
                 {
-                    int[] _rows = GetLongestStrings(options, menuMode);
-                    string[] _topStrings = new string[] {
-                        "ID",
-                        "Application",
-                        "Group",
-                        "Status",
-                        "Priority",
-                        "Title",
-                        "Description",
-                        "Version",
-                        "Date"
-                    };
-                    List<string> _optionColumn = new List<string>();
-                    for (int i = 0; i < _topStrings.Length; i++)
-                    {
-                        if (_rows[i] > _topStrings[i].Length)
-                        {
-                            _topStrings[i] = AddSpaceToString(_topStrings[i], _rows[i]);
-                        }
-                    }
-                    foreach (var _text in _topStrings)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Black;
-                        Console.BackgroundColor = ConsoleColor.Cyan;
-                        Console.Write(_text + " |");
-                        Console.ResetColor();
-                    }
-
-                    for (int j = 0; j < options.Length; j++)
-                    {
-                        string[] _args = options[j].Split("~~");
-                        for (int i = 0; i < _topStrings.Length; i++)
-                        {
-                            if (_rows[i] > _topStrings[i].Length)
-                            {
-                                _optionColumn.Add(_args[i]);
-                            }
-                            else
-                                _optionColumn.Add($"{AddSpaceToString(_args[i], _topStrings[i].Length)} |");
-                        }
-                        string _newOption = "";
-                        foreach (var _option in _optionColumn)
-                        {
-                            _newOption += _option;
-                        }
-                        _options.Add(_newOption);
-                        _optionColumn.Clear();
-                    }
+                    DisplayTop(_rows, _topStrings);
+                    MainMenu(options, _rows, _topStrings, _options);
                 }
                 else
                     _options = options.ToList();
@@ -86,33 +52,78 @@ namespace ToDo_List
                 if (direction == Direction.Vertical)
                 {
                     ListVertical(_options.ToArray(), _index, maxIndex);
-                }
-                else
-                {
-                    ListHorizontal(_options.ToArray(), _index, maxIndex);
                     Console.WriteLine();
-                }
-                Console.WriteLine();
-                if (direction == Direction.Vertical)
-                {
                     Console.WriteLine("Use arrow keys UP or DOWN to choose and press 'ENTER' to select.");
                 }
                 else
                 {
+                    DisplayTop(_rows, _topStrings);
+                    ListHorizontal(_options.ToArray(), _index, maxIndex, _rows, _topStrings);
+                    Console.WriteLine();
+                    Console.WriteLine();
                     Console.WriteLine("Use arrow keys LEFT or RIGHT to choose and press 'ENTER' to select.");
                 }
                 if (menuMode)
-                {
                     Console.WriteLine("Press 'End' to create a new task.");
-                }
-                Console.ResetColor();
+                else
+                    Console.WriteLine("Press 'End' to go back.");
 
                 _key = Console.ReadKey().Key;
                 _index = Controls(_key, _index, maxIndex, direction, menuMode);
-                _ = Search(_search, (char)_key);
             }
             Console.Clear();
             return _index;
+        }
+
+        private static void MainMenu(string[] options, int[] _rows, string[] _topStrings, List<string> _options)
+        {
+            List<string> _optionColumn;
+            for (int j = 0; j < options.Length; j++)
+            {
+                string[] _args = options[j].Split("~~");
+                _optionColumn = FormatOptions(_rows, _topStrings, _args);
+
+                string _newOption = "";
+                foreach (var _option in _optionColumn)
+                {
+                    _newOption += _option;
+                }
+                _options.Add(_newOption);
+                _optionColumn.Clear();
+            }
+        }
+
+        private static List<string> FormatOptions(int[] rows, string[] topStrings, string[] strings)
+        {
+            List<string> _optionColumn = new List<string>();
+            for (int i = 0; i < topStrings.Length; i++)
+            {
+                if (rows[i] >= topStrings[i].Length && rows[i] <= strings[i].Length)
+                {
+                    _optionColumn.Add($"{strings[i]} |");
+                }
+                else
+                    _optionColumn.Add($"{AddSpaceToString(strings[i], topStrings[i].Length)} |");
+            }
+            return _optionColumn;
+        }
+
+        private static void DisplayTop(int[] _rows, string[] _topStrings)
+        {
+            for (int i = 0; i < _topStrings.Length; i++)
+            {
+                if (_rows[i] > _topStrings[i].Length)
+                {
+                    _topStrings[i] = AddSpaceToString(_topStrings[i], _rows[i]);
+                }
+            }
+            foreach (var _text in _topStrings)
+            {
+                Console.ForegroundColor = ConsoleColor.Black;
+                Console.BackgroundColor = ConsoleColor.Cyan;
+                Console.Write(_text + " |");
+                Console.ResetColor();
+            }
         }
 
         private static int Controls(ConsoleKey key, int index, int maxIndex, Direction direction, bool menuMode)
@@ -178,22 +189,22 @@ namespace ToDo_List
             }
         }
 
-        private static void ListHorizontal(string[] options, int index, int maxIndex)
+        private static void ListHorizontal(string[] options, int index, int maxIndex, int[] rows, string[] topStrings)
         {
-            Console.Write($"| ");
+            Console.WriteLine();
+            string[] _options = FormatOptions(rows, topStrings, options).ToArray();
             for (int i = 0; i < options.Length; i++)
             {
                 if (i == index && maxIndex > 1)
                 {
                     Console.BackgroundColor = ConsoleColor.White;
                     Console.ForegroundColor = ConsoleColor.Black;
-                    Console.Write($"{options[i]}");
+                    Console.Write(_options[i]);
                     Console.ResetColor();
-                    Console.Write($" ");
                 }
                 else
                 {
-                    Console.Write($"{options[i]} ");
+                    Console.Write(_options[i]);
                 }
             }
         }
@@ -209,15 +220,16 @@ namespace ToDo_List
             return _stringLength.ToArray();
         }
 
-        private static int[] GetLongestStrings(string[] options, bool menuMode)
+        private static int[] GetLongestStrings(string[] options, bool menuMode, Direction direction)
         {
             List<int[]> _optionLength = new List<int[]>();
-            foreach (var _option in options)
-            {
-                _optionLength.Add(StringsToInts(_option.Split("~~")));
-            }
+            if (direction == Direction.Vertical)
+                foreach (var _option in options)
+                    _optionLength.Add(StringsToInts(_option.Split("~~")));
+            else
+                _optionLength.Add(StringsToInts(options));
 
-            List <int> _longestRowInts = new List<int>();
+            List<int> _longestRowInts = new List<int>();
             for (int i = 0; i < _optionLength[0].Length; i++)
             {
                 int[] _rows = GetRows(_optionLength.ToArray(), i);
@@ -228,7 +240,7 @@ namespace ToDo_List
 
         private static int[] GetRows(int[][] options, int index)
         {
-            List <int> _rowIndex = new List<int>();
+            List<int> _rowIndex = new List<int>();
             foreach (var _option in options)
             {
                 _rowIndex.Add(_option[index]);
@@ -258,11 +270,6 @@ namespace ToDo_List
                 }
             }
             return text;
-        }
-
-        private static int? Search(string text, char key)
-        {
-            return null;
         }
     }
 }
