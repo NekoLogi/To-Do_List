@@ -11,6 +11,17 @@
             while (true)
             {
                 Task[] _tasks = Task.GetTasks(Preset.Path);
+                if (_tasks == null)
+                {
+                    string[] _options = { "Yes", "No" };
+                    int _index = Display.Selector("Task list is empty.\nDo you want to create a new task?", _options, _options.Count(), Display.Direction.Vertical, false, false);
+                    Console.Clear();
+                    if (_index == 1)
+                    {
+                        Environment.Exit(0);
+                    }
+                    CreateTask();
+                }
 
                 do
                 {
@@ -27,18 +38,6 @@
                     _target = (string)_result[1];
 
                 } while (_target == null);
-
-                if (_tasks == null)
-                {
-                    string[] _options = { "Yes", "No" };
-                    int _index = Display.Selector("Task list is empty.\nDo you want to create a new task?", _options, _options.Count(), Display.Direction.Vertical, false, false);
-                    Console.Clear();
-                    if (_index == 1)
-                    {
-                        Environment.Exit(0);
-                    }
-                    CreateTask();
-                }
 
                 hasTarget = Start(_tasks!);
             }
