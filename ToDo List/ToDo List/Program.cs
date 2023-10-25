@@ -11,26 +11,32 @@
             while (true)
             {
                 Task[] _tasks = Task.GetTasks(Preset.Path);
-                if (_tasks == null)
+                while (_tasks == null)
                 {
-                    string[] _options = { "Yes", "No" };
-                    int _index = Display.Selector("Task list is empty.\nDo you want to create a new task?", _options, _options.Count(), Display.Direction.Vertical, false, false);
-                    Console.Clear();
-                    if (_index == 1)
+                    if (_tasks == null)
                     {
-                        Environment.Exit(0);
+                        string[] _options = { "Yes", "No" };
+                        int _index = Display.Selector("Task list is empty.\nDo you want to create a new task?", _options, _options.Length, Display.Direction.Vertical, false, false);
+                        Console.Clear();
+                        if (_index == 1)
+                        {
+                            Environment.Exit(0);
+                        }
+                        if (CreateTask(_tasks))
+                            _tasks = Task.GetTasks(Preset.Path);
                     }
-                    CreateTask();
                 }
+
 
                 do
                 {
                     if (_target == null)
                         hasTarget = false;
 
-                    if (_tasks!.Length > 1 && !hasTarget && Task.CountTargets(_tasks) > 1)
-                        _target = TargetSelection(_tasks);
-                    else if (Task.CountTargets(_tasks) == 1)
+                    int _targetCount = Task.CountTargets(_tasks);
+                    if (_tasks!.Length > 1 && !hasTarget && _targetCount > 1)
+                        _target = TargetSelection(out _tasks);
+                    else if (_targetCount == 1)
                         _target = "All";
 
                     object[] _result = Task.GetTasksByTarget(_tasks, _target);
@@ -118,11 +124,11 @@
         private static void EditorSelector(Task _task)
         {
             string[] _options = { "Back", "Edit", "Delete" };
-            int _index = Display.Selector("Editor:", _options, _options.Count(), Display.Direction.Vertical, false, false);
+            int _index = Display.Selector("Editor:", _options, _options.Length, Display.Direction.Vertical, false, false);
             if (_index == 2)
             {
                 _options = new string[] { "Yes", "No" };
-                _index = Display.Selector("Are you sure:", _options, _options.Count(), Display.Direction.Vertical, false, false);
+                _index = Display.Selector("Are you sure:", _options, _options.Length, Display.Direction.Vertical, false, false);
                 if (_index == 0)
                     _task.Delete(Preset.Path);
             }
@@ -132,40 +138,47 @@
 
         private static Task MainSelector(Task[] tasks)
         {
-            string[] _taskList = Task.TasksToString(tasks!);
-            int _taskIndex = Display.Selector("Tasks:", _taskList, _taskList.Count(), Display.Direction.Vertical, true, true);
+            string[] _taskList = Task.TasksToString(tasks);
+            int _taskIndex = Display.Selector("Tasks:", _taskList, _taskList.Length, Display.Direction.Vertical, true, true);
             switch (_taskIndex)
             {
                 case (int)Display.SpecialSelector.RETURN:
                     return null;
                 case (int)Display.SpecialSelector.CREATE_NEW_TASK:
-                    CreateTask();
+                    CreateTask(tasks);
                     return null;
                 default:
-                    return tasks![_taskIndex];
+                    return tasks[_taskIndex];
             }
         }
 
-        private static string TargetSelection(Task[] tasks)
+        private static string TargetSelection(out Task[] tasks)
         {
-            string[] _targets = Task.GetTargets(tasks);
-
-            List<string> _options = new List<string>(_targets);
-            _options.Insert(0, "All");
-            int _index = Display.Selector("Applications:", _options.ToArray(), _options.Count(), Display.Direction.Vertical, false, false);
-
+            int _index = 0;
+            List<string> _options = new();
+            tasks = null;
+            while (_index == 0)
+            {
+                tasks = Task.GetTasks(Preset.Path);
+                string[] _targets = Task.GetTargets(tasks);
+                _options = new(_targets);
+                _options.Insert(0, "All");
+                _options.Insert(0, "Create new Task");
+                _index = Display.Selector("Applications:", _options.ToArray(), _options.Count, Display.Direction.Vertical, false, false);
+                if (_index == 0)
+                    CreateTask(tasks);
+            }
             return _options[_index];
         }
 
         private static string Prompt(string request)
         {
             string s = "";
-            ConsoleKeyInfo _key = new ConsoleKeyInfo();
             while (true)
             {
                 Console.WriteLine("Press 'ESC' to cancel.");
                 Console.Write($"{request}{s}");
-                _key = Console.ReadKey();
+                ConsoleKeyInfo _key = Console.ReadKey();
                 Console.Clear();
 
                 switch (_key.Key)
@@ -185,40 +198,71 @@
             }
         }
 
-        private static void CreateTask()
+        private static bool CreateTask(Task[] tasks)
         {
             // Target
-            string _target = Prompt("Application: ");
-            if (_target == null)
-                return;
+            string _target = "";
+            if (tasks != null && tasks.Length != 0)
+            {
+                List<string> _targets = new()
+                {
+                    "New Application"
+                };
+                _targets.AddRange(from _task in Task.GetTargets(tasks)
+                                  select _task);
+
+                int _result = Display.Selector("Existing Applications:", _targets.ToArray(), _targets.Count, Display.Direction.Vertical, false, true);
+                if (_result == (int)Display.SpecialSelector.RETURN)
+                    return false;
+                else if (_result != 0)
+                    _target = tasks[_result - 1].Target;
+
+            }
+            if (string.IsNullOrEmpty(_target))
+            {
+                _target = Prompt("Application: ");
+                if (_target == null)
+                    return false;
+            }
             // Topic
-            string _topic = Prompt("Task Group: ");
-            if (_topic == null)
-                return;
+            string _topic = "";
+            string[] _options = new string[] { "New Group", "Feature", "Bug" };
+            int _index = Display.Selector("Groups:", _options, _options.Length, Display.Direction.Vertical, false, true);
+            if (_index == (int)Display.SpecialSelector.RETURN)
+                return false;
+            else if (_index != 0)
+                _topic = _options[_index];
+            if (string.IsNullOrEmpty(_topic))
+            {
+                _topic = Prompt("Task Group: ");
+                if (_topic == null)
+                    return false;
+            }
             // Priority
-            string[] _options = Enum.GetNames(typeof(Task.PriorityLevel));
-            int _index = Display.Selector("Priority:", _options, _options.Count(), Display.Direction.Vertical, false, true);
+            _options = Enum.GetNames(typeof(Task.PriorityLevel));
+            _index = Display.Selector("Priority:", _options, _options.Length, Display.Direction.Vertical, false, true);
             int _priority = _index;
             if (_priority == (int)Display.SpecialSelector.RETURN)
-                return;
+                return false;
             // Title
             string _title = Prompt("Title: ");
             if (_title == null)
-                return;
+                return false;
             // Description
             string _description = Prompt("Description: ");
             if (_description == null)
-                return;
+                return false;
             // Version
             string _version = Prompt("Version: ");
             if (_version == null)
-                return;
+                return false;
             // Date
             int _status = (int)Task.TaskStatus.Queued;
             string _date = DateTime.Now.Date.ToString("dd/MM/yyyy");
 
 
             Task.Create(Preset.Path, _target, _topic, _status, _priority, _title, _description, _version, _date);
+            return true;
         }
     }
 }

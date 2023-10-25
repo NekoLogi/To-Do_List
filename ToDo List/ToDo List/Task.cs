@@ -5,7 +5,6 @@ namespace ToDo_List
 {
     public class Task
     {
-
         [JsonProperty] public int Id { get; private set; }
         [JsonProperty] public string Target { get; private set; }
         [JsonProperty] public string Topic { get; private set; }
@@ -84,11 +83,10 @@ namespace ToDo_List
 
         public static string[] TasksToString(Task[] tasks)
         {
-            List<string> _tasks = new List<string>();
-            string _task = "";
-            for (int i = 0; i < tasks.Count(); i++)
+            List<string> _tasks = new();
+            for (int i = 0; i < tasks.Length; i++)
             {
-                _task = $"{tasks[i].Id}~~{tasks[i].Target}~~{tasks[i].Topic}~~{Enum.GetNames(typeof(Task.TaskStatus))[tasks[i].Status]}~~{Enum.GetNames(typeof(Task.PriorityLevel))[tasks[i].Priority]}~~{tasks[i].Title}~~{tasks[i].Description}~~{tasks[i].Version}~~{tasks[i].Date}";
+                string _task = $"{tasks[i].Id}~~{tasks[i].Target}~~{tasks[i].Topic}~~{Enum.GetNames(typeof(TaskStatus))[tasks[i].Status]}~~{Enum.GetNames(typeof(Task.PriorityLevel))[tasks[i].Priority]}~~{tasks[i].Title}~~{tasks[i].Description}~~{tasks[i].Version}~~{tasks[i].Date}";
                 _tasks.Add(_task);
             }
             return _tasks.ToArray();
@@ -110,9 +108,10 @@ namespace ToDo_List
             return _tasks;
         }
 
+
         public static string[] GetTargets(Task[] tasks)
         {
-            List<string> _targets = new List<string>();
+            List<string> _targets = new();
             foreach (var task in tasks)
             {
                 if (!string.IsNullOrEmpty(task.Target))
@@ -128,7 +127,7 @@ namespace ToDo_List
 
         public static string[] GetTopics(Task[] tasks, string target)
         {
-            List<string> _topics = new List<string>();
+            List<string> _topics = new();
 
             foreach (var task in tasks)
             {
@@ -149,30 +148,36 @@ namespace ToDo_List
             if (target == null || target == "All")
                 return new object[] { tasks, target };
 
-            List<Task> _tasks = new List<Task>();
+            List<Task> _tasks = new();
             foreach (var task in tasks!)
             {
                 if (task.Target == target)
                     _tasks.Add(task);
             }
 
-            return _tasks.Count() == 0 ? new object[] { tasks, null } : new object[] { _tasks.ToArray(), target };
+            return _tasks.Count == 0 ? new object[] { tasks, null } : new object[] { _tasks.ToArray(), target };
         }
 
         public static int CountTargets(Task[] tasks)
         {
-            List<string> _targets = new List<string>();
+            if (tasks == null)
+                return 0;
+            if (tasks.Length == 0)
+                return 0;
+
+            List<string> _targets = new();
             foreach (var _task in tasks)
             {
                 if (!_targets.Contains(_task.Target))
                     _targets.Add(_task.Target);
             }
-            return _targets.Count();
+            return _targets.Count;
         }
+
 
         public static bool Create(string path, string target, string topic, int status, int priority, string title, string description, string version, string date)
         {
-            Task _task = new Task();
+            Task _task = new();
             int _largestId = 0;
             foreach (var _item in Directory.GetFiles(path))
             {
@@ -218,7 +223,7 @@ namespace ToDo_List
             }
 
             string[] _files = Directory.GetFiles(path);
-            List<Task> _tasks = new List<Task>();
+            List<Task> _tasks = new();
             foreach (string _file in _files)
             {
                 string _json = File.ReadAllText(_file);

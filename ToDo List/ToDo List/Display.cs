@@ -16,9 +16,14 @@
 
         public static int Selector(string title, string[] options, int maxIndex, Direction direction, bool menuMode, bool canReturn)
         {
+            return Selector(title, options, maxIndex, direction, menuMode, canReturn, false);
+        }
+
+        public static int Selector(string title, string[] options, int maxIndex, Direction direction, bool menuMode, bool canReturn, bool canCreate)
+        {
             int _index = 0;
             ConsoleKey _key = ConsoleKey.Add;
-            int[] _rows = GetLongestStrings(options, menuMode, direction);
+            int[] _rows = GetLongestStrings(options, direction);
             string[] _topStrings = new string[] {
                 "ID",
                 "Application",
@@ -43,7 +48,7 @@
                 Console.Clear();
                 Console.WriteLine(title);
 
-                List<string> _options = new List<string>();
+                List<string> _options = new();
 
                 if (menuMode)
                 {
@@ -68,13 +73,13 @@
                     Console.WriteLine();
                     Console.WriteLine("Use arrow keys LEFT or RIGHT to choose and press 'ENTER' to select.");
                 }
-                if (menuMode)
+                if (menuMode || canCreate)
                     Console.WriteLine("Press 'End' to create a new task.");
                 if (canReturn)
                     Console.WriteLine("Press 'ESC' to go back.");
 
                 _key = Console.ReadKey().Key;
-                _index = Controls(_key, _index, maxIndex, direction, menuMode, canReturn);
+                _index = Controls(_key, _index, maxIndex, direction, menuMode, canReturn, canCreate);
             }
             Console.Clear();
             return _index;
@@ -100,7 +105,7 @@
 
         private static List<string> FormatOptions(int[] rows, string[] topStrings, string[] strings)
         {
-            List<string> _optionColumn = new List<string>();
+            List<string> _optionColumn = new();
             for (int i = 0; i < topStrings.Length; i++)
             {
                 if (rows[i] >= topStrings[i].Length && rows[i] <= strings[i].Length)
@@ -131,14 +136,14 @@
             }
         }
 
-        private static int Controls(ConsoleKey key, int index, int maxIndex, Direction direction, bool menuMode, bool canReturn)
+        private static int Controls(ConsoleKey key, int index, int maxIndex, Direction direction, bool menuMode, bool canReturn, bool canCreate)
         {
             // keybindings
             if (canReturn && key == ConsoleKey.Escape)
             {
                 return (int)SpecialSelector.RETURN;
             }
-            if (menuMode && key == ConsoleKey.End)
+            if ((canCreate || menuMode) && key == ConsoleKey.End)
             {
                 return (int)SpecialSelector.CREATE_NEW_TASK;
             }
@@ -223,7 +228,7 @@
 
         private static int[] StringsToInts(string[] strings)
         {
-            List<int> _stringLength = new List<int>();
+            List<int> _stringLength = new();
 
             foreach (var _string in strings)
             {
@@ -232,16 +237,16 @@
             return _stringLength.ToArray();
         }
 
-        private static int[] GetLongestStrings(string[] options, bool menuMode, Direction direction)
+        private static int[] GetLongestStrings(string[] options, Direction direction)
         {
-            List<int[]> _optionLength = new List<int[]>();
+            List<int[]> _optionLength = new();
             if (direction == Direction.Vertical)
                 foreach (var _option in options)
                     _optionLength.Add(StringsToInts(_option.Split("~~")));
             else
                 _optionLength.Add(StringsToInts(options));
 
-            List<int> _longestRowInts = new List<int>();
+            List<int> _longestRowInts = new();
             for (int i = 0; i < _optionLength[0].Length; i++)
             {
                 int[] _rows = GetRows(_optionLength.ToArray(), i);
@@ -252,7 +257,7 @@
 
         private static int[] GetRows(int[][] options, int index)
         {
-            List<int> _rowIndex = new List<int>();
+            List<int> _rowIndex = new();
             foreach (var _option in options)
             {
                 _rowIndex.Add(_option[index]);
