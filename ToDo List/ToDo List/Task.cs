@@ -1,19 +1,21 @@
 ﻿using Newtonsoft.Json;
-
+using Newtonsoft.Json.Serialization;
 
 namespace ToDo_List
 {
-    internal class Task
+    public class Task
     {
-        public int Id;
-        public string? Target;
-        public string? Topic;
-        public int Status;
-        public int Priority;
-        public string? Title;
-        public string? Description;
-        public string? Version;
-        public string? Date;
+
+        [JsonProperty] public int Id { get; private set; }
+        [JsonProperty] public string Target { get; private set; }
+        [JsonProperty] public string Topic { get; private set; }
+        [JsonProperty] public int Status { get; private set; }
+        [JsonProperty] public int Priority { get; private set; }
+        [JsonProperty] public string Title { get; private set; }
+        [JsonProperty] public string Description { get; private set; }
+        [JsonProperty] public string Version { get; private set; }
+        [JsonProperty] public string Date { get; private set; }
+
 
         public enum Label
         {
@@ -43,55 +45,151 @@ namespace ToDo_List
             Done
         }
 
-        public static bool Create(string path)
+
+        public void SetTitle(string title)
+        {
+            Title = title;
+        }
+
+        public void SetDescription(string description)
+        {
+            Description = description;
+        }
+
+        public void SetTopic(string topic)
+        {
+            Topic = topic;
+        }
+
+        public void SetTarget(string target)
+        {
+            Target = target;
+        }
+
+        public void SetStatus(int status)
+        {
+            Status = status;
+        }
+
+        public void SetPriority(int priority)
+        {
+            Priority = priority;
+        }
+
+        public void SetVersion(string version)
+        {
+            Version = version;
+        }
+
+
+        public static string[] TasksToString(Task[] tasks)
+        {
+            List<string> _tasks = new List<string>();
+            string _task = "";
+            for (int i = 0; i < tasks.Count(); i++)
+            {
+                _task = $"{tasks[i].Id}~~{tasks[i].Target}~~{tasks[i].Topic}~~{Enum.GetNames(typeof(Task.TaskStatus))[tasks[i].Status]}~~{Enum.GetNames(typeof(Task.PriorityLevel))[tasks[i].Priority]}~~{tasks[i].Title}~~{tasks[i].Description}~~{tasks[i].Version}~~{tasks[i].Date}";
+                _tasks.Add(_task);
+            }
+            return _tasks.ToArray();
+        }
+
+        public string[] TaskToString()
+        {
+            string[] _tasks = new string[]
+            {
+                $"{Target}",
+                $"{Topic}",
+                $"{Enum.GetNames(typeof(TaskStatus))[Status]}",
+                $"{Enum.GetNames(typeof(PriorityLevel))[Priority]}",
+                $"{Title}",
+                $"{Description}",
+                $"{Version}",
+                $"{Date}"
+            };
+            return _tasks;
+        }
+
+        public static string[] GetTargets(Task[] tasks)
+        {
+            List<string> _targets = new List<string>();
+            foreach (var task in tasks)
+            {
+                if (!string.IsNullOrEmpty(task.Target))
+                {
+                    if (!_targets.Contains(task.Target!))
+                    {
+                        _targets.Add(task.Target!);
+                    }
+                }
+            }
+            return _targets.ToArray();
+        }
+
+        public static string[] GetTopics(Task[] tasks, string target)
+        {
+            List<string> _topics = new List<string>();
+
+            foreach (var task in tasks)
+            {
+                if (!string.IsNullOrEmpty(task.Target) && !string.IsNullOrEmpty(task.Topic))
+                {
+                    if (target == task.Target! && !_topics.Contains(task.Topic!))
+                    {
+                        _topics.Add(task.Topic!);
+                    }
+                }
+            }
+            return _topics.ToArray();
+        }
+
+
+        public static object[] GetTasksByTarget(Task[] tasks, string target)
+        {
+            if (target == null || target == "All")
+                return new object[] { tasks, target };
+
+            List<Task> _tasks = new List<Task>();
+            foreach (var task in tasks!)
+            {
+                if (task.Target == target)
+                    _tasks.Add(task);
+            }
+
+            return _tasks.Count() == 0 ? new object[] { tasks, null } : new object[] { _tasks.ToArray(), target };
+        }
+
+        public static int CountTargets(Task[] tasks)
+        {
+            List<string> _targets = new List<string>();
+            foreach (var _task in tasks)
+            {
+                if (!_targets.Contains(_task.Target))
+                    _targets.Add(_task.Target);
+            }
+            return _targets.Count();
+        }
+
+        public static bool Create(string path, string target, string topic, int status, int priority, string title, string description, string version, string date)
         {
             Task _task = new Task();
-            if (!Preset.UseGUI)
+            int _largestId = 0;
+            foreach (var _item in Directory.GetFiles(path))
             {
-                // ID
-                int _largestId = 0;
-                foreach (var _item in Directory.GetFiles(path))
-                {
-                    int _currentId = int.Parse(Path.GetFileNameWithoutExtension(_item));
-                    if (_largestId < _currentId)
-                        _largestId = _currentId;
-                }
-                _task.Id = _largestId + 1;
-
-                // Target
-                Console.Write("Application: ");
-                _task.Target = ReplaceEmpty(Console.ReadLine()!);
-                Console.Clear();
-
-                // Topic
-                Console.Write("Task Group: ");
-                _task.Topic = ReplaceEmpty(Console.ReadLine()!);
-                Console.Clear();
-
-                // Priority
-                string[] _options = Enum.GetNames(typeof(PriorityLevel));
-                int _index = Display.Selector("Priority:", _options, _options.Count(), Display.Direction.Vertical, false);
-                _task.Priority = _index;
-                Console.Clear();
-
-                // Title
-                Console.Write("Title: ");
-                _task.Title = ReplaceEmpty(Console.ReadLine()!);
-                Console.Clear();
-
-                // Description
-                Console.Write("Description: ");
-                _task.Description = ReplaceEmpty(Console.ReadLine()!);
-                Console.Clear();
-
-                // Version
-                Console.Write("Version: ");
-                _task.Version = ReplaceEmpty(Console.ReadLine()!);
-                Console.Clear();
-
-                _task.Status = (int)TaskStatus.Queued;
-                _task.Date = DateTime.Now.Date.ToString("dd/MM/yyyy");
+                int _currentId = int.Parse(Path.GetFileNameWithoutExtension(_item));
+                if (_largestId < _currentId)
+                    _largestId = _currentId;
             }
+            _task.Id = _largestId + 1;
+            _task.Target = ReplaceEmpty(target);
+            _task.Topic = ReplaceEmpty(topic);
+            _task.Priority = priority;
+            _task.Title = ReplaceEmpty(title);
+            _task.Description = ReplaceEmpty(description);
+            _task.Version = ReplaceEmpty(version);
+            _task.Status = status;
+            _task.Date = date;
+
             string _path = $"{path}/{_task.Id}.json";
             string _json = JsonConvert.SerializeObject(_task, Formatting.Indented);
             File.WriteAllText(_path, _json);
@@ -99,9 +197,9 @@ namespace ToDo_List
             return true;
         }
 
-        public static bool Delete(string path, Task task)
+        public bool Delete(string path)
         {
-            string _fileName = $"{task.Target} {task.Topic} {task.Title}.json";
+            string _fileName = $"{Id}.json";
             string _path = $"{path}/{_fileName}";
             if (File.Exists(_path))
             {
@@ -111,23 +209,30 @@ namespace ToDo_List
             return false;
         }
 
-        public static Task[]? LoadTasks(string path)
+        public static Task[] GetTasks(string path)
         {
+            if (!Directory.Exists(Preset.Path))
+            {
+                Directory.CreateDirectory(Preset.Path);
+                return null;
+            }
+
             string[] _files = Directory.GetFiles(path);
             List<Task> _tasks = new List<Task>();
             foreach (string _file in _files)
             {
                 string _json = File.ReadAllText(_file);
                 Task _task = JsonConvert.DeserializeObject<Task>(_json)!;
-                _tasks.Add(_task);
+                if (_task != null)
+                    _tasks.Add(_task!);
             }
-            return _tasks.ToArray();
+            return _tasks.Count == 0 ? null : _tasks.ToArray();
         }
 
-        public static bool SaveTask(string path, Task task)
+        public bool Save(string path)
         {
-            string _path = $"{path}/{task.Id}.json";
-            string _json = JsonConvert.SerializeObject(task, Formatting.Indented);
+            string _path = $"{path}/{Id}.json";
+            string _json = JsonConvert.SerializeObject(this, Formatting.Indented);
             File.WriteAllText(_path, _json);
 
             return true;

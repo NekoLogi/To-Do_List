@@ -2,13 +2,19 @@
 {
     internal class Display
     {
+        public enum SpecialSelector
+        {
+            RETURN = -2,
+            CREATE_NEW_TASK,
+        }
+
         public enum Direction
         {
             Vertical,
             Horizontal
         }
 
-        public static int Selector(string title, string[] options, int maxIndex, Direction direction, bool menuMode)
+        public static int Selector(string title, string[] options, int maxIndex, Direction direction, bool menuMode, bool canReturn)
         {
             int _index = 0;
             ConsoleKey _key = ConsoleKey.Add;
@@ -24,7 +30,6 @@
                 "Version",
                 "Date"
             };
-
 
             if (direction == Direction.Horizontal)
             {
@@ -65,11 +70,11 @@
                 }
                 if (menuMode)
                     Console.WriteLine("Press 'End' to create a new task.");
-                else
-                    Console.WriteLine("Press 'End' to go back.");
+                if (canReturn)
+                    Console.WriteLine("Press 'ESC' to go back.");
 
                 _key = Console.ReadKey().Key;
-                _index = Controls(_key, _index, maxIndex, direction, menuMode);
+                _index = Controls(_key, _index, maxIndex, direction, menuMode, canReturn);
             }
             Console.Clear();
             return _index;
@@ -126,12 +131,19 @@
             }
         }
 
-        private static int Controls(ConsoleKey key, int index, int maxIndex, Direction direction, bool menuMode)
+        private static int Controls(ConsoleKey key, int index, int maxIndex, Direction direction, bool menuMode, bool canReturn)
         {
+            // keybindings
+            if (canReturn && key == ConsoleKey.Escape)
+            {
+                return (int)SpecialSelector.RETURN;
+            }
             if (menuMode && key == ConsoleKey.End)
             {
-                return -1;
+                return (int)SpecialSelector.CREATE_NEW_TASK;
             }
+
+            // Navigation
             if (direction == Direction.Vertical)
             {
                 switch (key)

@@ -2,8 +2,9 @@
 {
     internal class Build
     {
-        public const string Name = "ToDo List";
-        public const string Version = "1.0.0";
-        public const string ReleaseDate = "18.08.2023";
+        public const string NAME = "ToDo List";
+        public const string BRANCH = "dev";
+        public const string VERSION = "Build 7";
+        public const string RELEASE_DATE = "25.10.2023";
     }
 }

@@ -2,212 +2,224 @@
 {
     internal class Program
     {
-        /// <summary>
-        /// 
-        /// TODO:
-        /// 
-        /// </summary>
-
-
-        private enum Flag
+        static void Main(string[] args)
         {
-            gui
-        }
+            Console.Title = $"{Build.NAME}: {Build.BRANCH}-{Build.VERSION}";
 
-        private static int[] GetSortFlags(string[] args)
-        {
-            List<int> _flags = new List<int>();
-            foreach (string arg in args)
+            bool hasTarget = false;
+            string _target = null;
+            while (true)
             {
-                foreach (var flag in Enum.GetValues(typeof(List.SortFlag)))
+                Task[] _tasks = Task.GetTasks(Preset.Path);
+
+                do
                 {
-                    if (arg.Remove(0).ToLower() == flag.ToString())
+                    if (_target == null)
+                        hasTarget = false;
+
+                    if (_tasks!.Length > 1 && !hasTarget && Task.CountTargets(_tasks) > 1)
+                        _target = TargetSelection(_tasks);
+                    else if (Task.CountTargets(_tasks) == 1)
+                        _target = "All";
+
+                    object[] _result = Task.GetTasksByTarget(_tasks, _target);
+                    _tasks = (Task[])_result[0];
+                    _target = (string)_result[1];
+
+                } while (_target == null);
+
+                if (_tasks == null)
+                {
+                    string[] _options = { "Yes", "No" };
+                    int _index = Display.Selector("Task list is empty.\nDo you want to create a new task?", _options, _options.Count(), Display.Direction.Vertical, false, false);
+                    Console.Clear();
+                    if (_index == 1)
                     {
-                        _flags.Add((int)flag);
+                        Environment.Exit(0);
                     }
+                    CreateTask();
                 }
+
+                hasTarget = Start(_tasks!);
             }
-            return _flags.ToArray();
         }
 
-        private static Flag[] GetFlags(string[] args)
+        private static bool Start(Task[] tasks)
         {
-            List<Flag> _flags = new List<Flag>();
-            foreach (string arg in args)
+            Task _task = MainSelector(tasks);
+            if (_task != null)
             {
-                foreach (var flag in Enum.GetValues(typeof(List.SortFlag)))
-                {
-                    if (arg.Remove(0).ToLower() == flag.ToString())
-                    {
-                        _flags.Add((Flag)flag);
-                    }
-                }
+                EditorSelector(_task);
+                return true;
             }
-            return _flags.ToArray();
+            return false;
         }
 
-        private static string? Rename(string text)
+        private static string GetString(string text)
         {
             Console.WriteLine("Current: {0}", text);
             Console.Write("New: ");
-            string? _name = Console.ReadLine();
+            string _name = Console.ReadLine();
             Console.Clear();
             return _name;
         }
 
-        private static Task Editor(Task task)
-        {
-            int _loop = 0;
-            while (_loop == 0)
-            {
-                string[] _options = { "Edit", "Back" };
-
-                string[] _taskOptions = List.GenerateTask(task);
-                int _index = Display.Selector("Editor:", _taskOptions, 6, Display.Direction.Horizontal, false);
-                switch (_index)
-                {
-                    case (int)Task.Label.Target:
-                        _index = Display.Selector("Editor:", _options, _options.Length, Display.Direction.Vertical, false);
-                        if (_index == 0)
-                        {
-                            task.Target = Rename(task.Target!);
-                        }
-                        break;
-                    case (int)Task.Label.Topic:
-                        _index = Display.Selector("Editor:", _options, _options.Length, Display.Direction.Vertical, false);
-                        if (_index == 0)
-                        {
-                            task.Topic = Rename(task.Topic!);
-                        }
-                        break;
-                    case (int)Task.Label.Status:
-                        _index = Display.Selector("Editor:", _options, _options.Length, Display.Direction.Vertical, false);
-                        if (_index == 0)
-                        {
-                            task.Status = Display.Selector($"Current: {Enum.GetNames(typeof(Task.TaskStatus))[task.Status]}",
-                                Enum.GetNames(typeof(Task.TaskStatus)),
-                                Enum.GetNames(typeof(Task.TaskStatus)).Length,
-                                Display.Direction.Vertical,
-                                false);
-                        }
-                        break;
-                    case (int)Task.Label.Priority:
-                        _index = Display.Selector("Editor:", _options, _options.Count(), Display.Direction.Vertical, false);
-                        if (_index == 0)
-                        {
-                            task.Priority = Display.Selector($"Current: {Enum.GetNames(typeof(Task.PriorityLevel))[task.Priority]}",
-                                Enum.GetNames(typeof(Task.PriorityLevel)),
-                                Enum.GetNames(typeof(Task.PriorityLevel)).Length,
-                                Display.Direction.Vertical,
-                                false);
-                        }
-                        break;
-                    case (int)Task.Label.Title:
-                        _index = Display.Selector("Editor:", _options, _options.Length, Display.Direction.Vertical, false);
-                        if (_index == 0)
-                        {
-                            task.Title = Rename(task.Title!);
-                        }
-                        break;
-                    case (int)Task.Label.Description:
-                        _index = Display.Selector("Editor:", _options, _options.Length, Display.Direction.Vertical, false);
-                        if (_index == 0)
-                        {
-                            task.Description = Rename(task.Description!);
-                        }
-                        break;
-                    case (int)Task.Label.Version:
-                        _index = Display.Selector("Editor:", _options, _options.Length, Display.Direction.Vertical, false);
-                        if (_index == 0)
-                        {
-                            task.Version = Rename(task.Version!);
-                        }
-                        break;
-                }
-
-                _options = new string[] { "Yes", "No" };
-                _loop = Display.Selector("Do you want to edit more:", _options, _options.Count(), Display.Direction.Vertical, false);
-            }
-            return task;
-        }
-
-        private static void Start(int[]? sortFlags)
+        private static void Editor(Task task)
         {
             while (true)
             {
-                Task[] _tasks = Task.LoadTasks(Preset.Path)!;
-                Task[] _sortedTaskList = null!;
-                if (sortFlags == null || sortFlags?.Length == 0)
+                string _result;
+                string[] _taskOptions = task.TaskToString();
+                int _index = Display.Selector("Editor:", _taskOptions, 7, Display.Direction.Horizontal, false, true);
+                switch (_index)
                 {
-                    _sortedTaskList = _tasks;
-                }
-                else
-                {
-                    //_sortedTaskList = List.Sort();
-                }
-                string[] _taskList = List.GenerateTasks(_sortedTaskList!);
-                int _taskIndex = Display.Selector("Tasks:", _taskList, _taskList.Count(), Display.Direction.Vertical, true);
-                Task _task;
-                switch (_taskIndex)
-                {
-                    case -1:
-                        Task.Create(Preset.Path);
-                        continue;
-                    default:
-                        _task = _sortedTaskList![_taskIndex];
+                    case (int)Display.SpecialSelector.RETURN:
+                        return;
+                    case (int)Task.Label.Target:
+                        _result = GetString(task.Target!);
+                        task.SetTarget(_result);
+                        break;
+                    case (int)Task.Label.Topic:
+                        _result = GetString(task.Topic!);
+                        task.SetTopic(_result);
+                        break;
+                    case (int)Task.Label.Status:
+                        int _result1 = Display.Selector($"Current: {Enum.GetNames(typeof(Task.TaskStatus))[task.Status]}",
+                            Enum.GetNames(typeof(Task.TaskStatus)),
+                            Enum.GetNames(typeof(Task.TaskStatus)).Length,
+                            Display.Direction.Vertical,
+                            false, false);
+                        task.SetStatus(_result1);
+                        break;
+                    case (int)Task.Label.Priority:
+                        int _result2 = Display.Selector($"Current: {Enum.GetNames(typeof(Task.PriorityLevel))[task.Priority]}",
+                            Enum.GetNames(typeof(Task.PriorityLevel)),
+                            Enum.GetNames(typeof(Task.PriorityLevel)).Length,
+                            Display.Direction.Vertical,
+                            false, false);
+                        task.SetPriority(_result2);
+                        break;
+                    case (int)Task.Label.Title:
+                        _result = GetString(task.Title!);
+                        task.SetTitle(_result);
+                        break;
+                    case (int)Task.Label.Description:
+                        _result = GetString(task.Description!);
+                        task.SetDescription(_result);
+                        break;
+                    case (int)Task.Label.Version:
+                        _result = GetString(task.Version!);
+                        task.SetVersion(_result);
                         break;
                 }
-                string[] _options = { "Back", "Edit", "Delete" };
-                int _index = Display.Selector("Editor:", _options, _options.Count(), Display.Direction.Vertical, false);
-                if (_index == 2)
+                task.Save(Preset.Path);
+            }
+        }
+
+        private static void EditorSelector(Task _task)
+        {
+            string[] _options = { "Back", "Edit", "Delete" };
+            int _index = Display.Selector("Editor:", _options, _options.Count(), Display.Direction.Vertical, false, false);
+            if (_index == 2)
+            {
+                _options = new string[] { "Yes", "No" };
+                _index = Display.Selector("Are you sure:", _options, _options.Count(), Display.Direction.Vertical, false, false);
+                if (_index == 0)
+                    _task.Delete(Preset.Path);
+            }
+            else if (_index == 1)
+                Editor(_task);
+        }
+
+        private static Task MainSelector(Task[] tasks)
+        {
+            string[] _taskList = Task.TasksToString(tasks!);
+            int _taskIndex = Display.Selector("Tasks:", _taskList, _taskList.Count(), Display.Direction.Vertical, true, true);
+            switch (_taskIndex)
+            {
+                case (int)Display.SpecialSelector.RETURN:
+                    return null;
+                case (int)Display.SpecialSelector.CREATE_NEW_TASK:
+                    CreateTask();
+                    return null;
+                default:
+                    return tasks![_taskIndex];
+            }
+        }
+
+        private static string TargetSelection(Task[] tasks)
+        {
+            string[] _targets = Task.GetTargets(tasks);
+
+            List<string> _options = new List<string>(_targets);
+            _options.Insert(0, "All");
+            int _index = Display.Selector("Applications:", _options.ToArray(), _options.Count(), Display.Direction.Vertical, false, false);
+
+            return _options[_index];
+        }
+
+        private static string Prompt(string request)
+        {
+            string s = "";
+            ConsoleKeyInfo _key = new ConsoleKeyInfo();
+            while (true)
+            {
+                Console.WriteLine("Press 'ESC' to cancel.");
+                Console.Write($"{request}{s}");
+                _key = Console.ReadKey();
+                Console.Clear();
+
+                switch (_key.Key)
                 {
-                    _options = new string[] { "Yes", "No" };
-                    _index = Display.Selector("Are you sure:", _options, _options.Count(), Display.Direction.Vertical, false);
-                    if (_index == 0)
-                    {
-                        Task.Delete(Preset.Path, _task);
-                    }
-                }
-                else if (_index == 1)
-                {
-                    Task.SaveTask(Preset.Path, Editor(_task));
+                    case ConsoleKey.Enter:
+                        return s;
+                    case ConsoleKey.Escape:
+                        return null;
+                    case ConsoleKey.Backspace:
+                        if (s.Length != 0)
+                            s = s.Remove(s.Length - 1);
+                        break;
+                    default:
+                        s += _key.KeyChar;
+                        break;
                 }
             }
         }
 
-        static void Main(string[] args)
+        private static void CreateTask()
         {
-            int[]? _sortFlags = null;
-            Flag[]? _flags = null;
+            // Target
+            string _target = Prompt("Application: ");
+            if (_target == null)
+                return;
+            // Topic
+            string _topic = Prompt("Task Group: ");
+            if (_topic == null)
+                return;
+            // Priority
+            string[] _options = Enum.GetNames(typeof(Task.PriorityLevel));
+            int _index = Display.Selector("Priority:", _options, _options.Count(), Display.Direction.Vertical, false, true);
+            int _priority = _index;
+            if (_priority == (int)Display.SpecialSelector.RETURN)
+                return;
+            // Title
+            string _title = Prompt("Title: ");
+            if (_title == null)
+                return;
+            // Description
+            string _description = Prompt("Description: ");
+            if (_description == null)
+                return;
+            // Version
+            string _version = Prompt("Version: ");
+            if (_version == null)
+                return;
+            // Date
+            int _status = (int)Task.TaskStatus.Queued;
+            string _date = DateTime.Now.Date.ToString("dd/MM/yyyy");
 
-            if (!Directory.Exists(Preset.Path))
-            {
-                Directory.CreateDirectory(Preset.Path);
-            }
-            if (args.Length != 0)
-            {
-                _sortFlags = GetSortFlags(args);
-                _flags = GetFlags(args);
 
-                if (_flags.Contains(Flag.gui))
-                    Preset.UseGUI = true;
-            }
-            if (!Preset.UseGUI)
-            {
-                Console.Title = $"{Build.Name} {Build.Version}";
-            }
-            if (Directory.GetFiles(Preset.Path).Length == 0)
-            {
-                string[] _options = { "Yes", "No" };
-                int _index = Display.Selector("Task list is empty.\nDo you want to create a new task?", _options, _options.Count(), Display.Direction.Vertical, false);
-                Console.Clear();
-                if (_index == 1)
-                {
-                    Environment.Exit(0);
-                }
-                Task.Create(Preset.Path);
-            }
-            Start(_sortFlags);
+            Task.Create(Preset.Path, _target, _topic, _status, _priority, _title, _description, _version, _date);
         }
     }
 }
